@@ -14,14 +14,12 @@ import time
 from sqlalchemy.orm import Session
 from .Database import SessionLocal, engine,get_db
 from .import models,schemas,utils
+from app.routes import post,user,auth
+
 
 app = FastAPI()
 
-
-
 models.Base.metadata.create_all(bind=engine)
-
-
 
 #data base connection for postgres implementation
 while 1:
@@ -39,23 +37,6 @@ while 1:
 
 
 
-# bprint(my_posts)
-#create a class for post of post data
-class Post(BaseModel):
-    Title: str
-    content:str
-    #default Field
-    Published :bool = True
-    #create an optional field
-    Ratings :Optional[int] = None
-
-
-#get query with sqlalchemy
-@app.get("/",response_model=List[schemas.PostResponse])
-def test_posts(db:Session = Depends(get_db)):
-     posts = db.query(models.Post).all()
-     print(posts)
-     return posts
 
 
 # get post with regular sql
@@ -96,15 +77,6 @@ def create_post(post:Post):
     print(my_posts)
     return {f"data :{avail_posts}"}
 """
-#create post using sqlalchemy
-@app.post("/Create_posts",status_code=status.HTTP_201_CREATED,response_model=schemas.PostResponse)
-def create_post(post:schemas.PostCreate,db:Session = Depends(get_db)):
-    new_post = models.Post(**post.dict())
-    db.add(new_post)
-    db.commit()
-    db.refresh(new_post) 
-    return new_post
-   
 
      
 
@@ -164,33 +136,10 @@ def retrieve_post_by_id(id:int):
 
 
 #get post by id using SQLALCHEMY
-@app.get("/posts/{id}",status_code=status.HTTP_200_OK)
-def retrieve_post_by_id(id:int,db:Session = Depends(get_db)):
-    post = db.query(models.Post).filter(models.Post.id == id).first()
-    #print(post)
-    if not post:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No post found with id {id}")
-    return  post
-
-
-
 
 
 
 #Delete post by id using sqlAlchemy
-@app.delete("/posts/{id}",status_code=status.HTTP_204_NO_CONTENT)
-def delete_postby_id(id:int,db:Session = Depends(get_db)): 
-        post = db.query(models.Post).filter(models.Post.id == id)
-        if not post.first():
-             return HTTPException(status_code=404,detail= f"Post {id} Doesnot Exist")
-        post.delete(synchronize_session=False)
-        db.commit()
-        return {"message": f"Post with id {id} has been successfully deleted"}
-    
-
-
-
-
 
 
 
@@ -222,22 +171,6 @@ def update_request(id:int,post:Post):
 
 
 #update post in database through api
-@app.put("/update_posts/{id}",response_model=schemas.PostResponse)
-def update_request(id:int,post:schemas.PostBase,db:Session = Depends(get_db)):
-    updated_post = db.query(models.Post).filter(models.Post.id == id).first()
-    
-    # Check if the post with the given id exists
-    if updated_post is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found")
-    
-    # Update the post with the new data
-    for field in post.dict(exclude_unset=True):
-        setattr(updated_post, field, getattr(post, field))
-    
-    # Commit the changes to the database
-    db.commit()
-    
-    return updated_post
 
 
 
@@ -253,17 +186,6 @@ def update_request(id:int,post:schemas.PostBase,db:Session = Depends(get_db)):
 #    return{"Data ": updatespost}
 
 
-
-
-#working on User Model 
-@app.post("/CreateUser",response_model=schemas.UserOut)
-def create_post(user:schemas.User,db:Session = Depends(get_db)):
-    
-    #hashing the password
-    hased = utils.hash(user.password)
-    user.password = hased
-    newUser = models.User(**user.dict())  
-    db.add(newUser)
-    db.commit()
-    db.refresh(newUser) 
-    return newUser
+app.include_router(post.router)
+app.include_router(user.router)
+app.include_router(auth.router)

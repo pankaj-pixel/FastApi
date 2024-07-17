@@ -4,6 +4,7 @@ from app.Database import *
 from sqlalchemy.sql.expression import text
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 class Post(Base):
+    
     __tablename__ ='post'
     id = Column(Integer,primary_key=True,nullable=False)
     Title =Column(String,nullable=False)
