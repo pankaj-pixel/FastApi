@@ -1,38 +1,41 @@
-from fastapi import FastAPI,status,Depends
-from fastapi import status
-from fastapi.params import Body
-#To cretae data schemas we uses pydantic
-from pydantic import BaseModel
-from typing import Optional,List
-import random
-from fastapi.exceptions import HTTPException
-import psycopg2
-from psycopg2.extras import RealDictCursor
-#from Database import engine,get_db
-import time
-
-from sqlalchemy.orm import Session
-from .Database import SessionLocal, engine,get_db
-from .import models,schemas,utils
-from app.routes import post,user,auth
+from fastapi import FastAPI
+from .Database import  engine
+from .import models
+from app.routes import post,user,auth,vote
 
 
 app = FastAPI()
 
 models.Base.metadata.create_all(bind=engine)
 
-#data base connection for postgres implementation
-while 1:
-    try:
-        conn = psycopg2.connect(host ='localhost', database = 'fastapi' , user ='postgres',password =123456,cursor_factory=RealDictCursor)
-        cursor = conn.cursor()
-        print("connection Successfully")
-        break
 
-    except Exception as error:
-        print("Failed Database connection")
-        print("Error",error)
-        time.sleep(2)
+app.include_router(post.router)
+app.include_router(user.router)
+app.include_router(auth.router)
+app.include_router(vote.router)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -172,20 +175,14 @@ def update_request(id:int,post:Post):
 
 #update post in database through api
 
-
-
 #update post in database through api
 #@app.put("/update_posts/{id}",status_code=204)
 #def update_request(id:int,post:Post):
 #    cursor.execute("""UPDATE public.post SET "Title" = %s ,content =%s ,"Published" = %s WHERE id = %s RETURNING * """,(post.Title, post.content, post.Published ,str(id)))
 #    updatespost = cursor.fetchone()
 #    conn.commit()
-
 #    if updatespost == None:
 #          raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="id Not Found !!!") 
 #    return{"Data ": updatespost}
 
 
-app.include_router(post.router)
-app.include_router(user.router)
-app.include_router(auth.router)

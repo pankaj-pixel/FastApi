@@ -8,11 +8,10 @@ from typing import Optional,List
 router = APIRouter()
 
 
-
 @router.post("/CreateUser",response_model=schemas.UserOut)
 def create_post(user:schemas.User,db:Session = Depends(get_db)):
     try:
-        #hashing the password
+
         hased = utils.hash(user.password)
         user.password = hased
         newUser = models.User(**user.dict())  
@@ -28,7 +27,7 @@ def create_post(user:schemas.User,db:Session = Depends(get_db)):
 def get_user(id: int ,db:Session = Depends(get_db),):
     user = db.query(models.User).filter(models.User.id ==id).first()
     if not id :
-       return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="id Not Found !!!") 
+       return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=" id Not Found !!!") 
     return user
 
 
