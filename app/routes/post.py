@@ -5,12 +5,15 @@ from ..routes import oauth
 from ..Database import get_db
 from psycopg2.extras import RealDictCursor
 from typing import List,Optional
+from sqlalchemy import func
+router = APIRouter(
+     tags=['Posts']
+)
 
-router = APIRouter()
 
-
-#get query with sqlalchemy
-@router.get("/",response_model=List[schemas.PostResponse])
+"""#get query with sqlalchemy
+@router.get("/")
+# @router.get("/")
 def test_posts(db:Session = Depends(get_db),current_user:int =Depends(oauth.get_current_user),limit:int =10,skip:int =0,search:Optional[str]=""):
      #only userlogin post
      #loginPost = db.query(models.Post).filter(models.Post.owner_id == current_user).all()
@@ -18,24 +21,178 @@ def test_posts(db:Session = Depends(get_db),current_user:int =Depends(oauth.get_
      #get all post without query parameters limit,skip,search
      #posts = db.query(models.Post).all()
      
-     
      #get all post without query parameters limit,skip,search
-     posts  = db.query(models.Post).filter(models.Post.Title.contains(search)).limit(limit).offset(skip).all()
-     print(posts)
-     return posts
+     #posts  = db.query(models.Post).filter(models.Post.Title.contains(search)).limit(limit).offset(skip).all()
+
+     #get all post with numbers of votes on them
+     posts = db.query(models.Post,func.count(models.Vote.post_id).label("Votes")).join(models.Vote,models.Vote.post_id == models.Post.id ,isouter=True).group_by(models.Post.id).all()
+        
+     return response_data
+"""
+
+
+
+@router.get("/")
+def test_posts(
+    db: Session = Depends(get_db),
+    current_user: int = Depends(oauth.get_current_user),
+    limit: int = 10,
+    skip: int = 0,
+    search: Optional[str] = ""
+):
+    try:
+        posts = db.query(
+            models.Post.id,
+            models.Post.Title.label('Title'),
+            models.Post.content.label('content'),
+            func.count(models.Vote.post_id).label("Votes")
+        ).outerjoin(
+            models.Vote, models.Vote.post_id == models.Post.id
+        ).filter(
+            models.Post.Title.contains(search)
+        ).group_by(
+            models.Post.id
+        ).limit(limit).offset(skip).all()
+
+        # Convert SQLAlchemy objects to dictionaries
+        response_data = [
+            {
+                "id": post.id,
+                "Title": post.Title,
+                "content": post.content,
+
+                "Votes": post.Votes
+            }
+            for post in posts
+        ]
+        return response_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 #get post by id using SQLALCHEMY
-@router.get("/posts/{id}",status_code=status.HTTP_200_OK)
-def retrieve_post_by_id(id:int,db:Session = Depends(get_db),current_user:int = Depends(oauth.get_current_user)):
-    post = db.query(models.Post).filter(models.Post.id == id).first()
+"""@router.get("/posts/{id}",status_code=status.HTTP_200_OK)
+def retrieve_post_by_id(id:int,db:Session = Depends(get_db),current_user:int = Depends(oauth.get_current_user),limit: int = 10,skip: int = 0, search: Optional[str] = ""):
+   #post = db.query(models.Post).filter(models.Post.id == id).first()
+   #extract vote i this field 
+  # votes = db.query(models.Vote).filter(models.Vote.post_id == id).count()
+   #using join post and votes
+   
+    try:
+        posts = db.query(
+            models.Post.id,
+            models.Post.Title.label('Title'),
+            models.Post.content.label('content'),
+            func.count(models.Vote.post_id).label("Votes")
+        ).outerjoin(
+            models.Vote, models.Vote.post_id == models.Post.id
+        ).filter(
+            models.Post.Title.contains(search)
+        ).group_by(
+            models.Post.id
+        ).limit(limit).offset(skip).first()
+
+
+        # Convert SQLAlchemy objects to dictionaries
+        response_data = [
+            {
+                "id": post.id,
+                "Title": post.Title,
+                "content": post.content,
+
+                "Votes": post.Votes
+            }
+            for post in posts
+        ]
+        return response_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
    #print(post)
-    if not post:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No post found with id {id}")
-    return  post
+
 
 
  #post using sqlalchemy
+
+"""
+
+
+
+@router.get("/posts/{id}",  status_code=status.HTTP_200_OK)
+def retrieve_post_by_id(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: int = Depends(oauth.get_current_user),
+    limit: int = 10,
+    skip: int = 0,
+    search: Optional[str] = ""
+):
+    try:
+        post = db.query(
+            models.Post.id,
+            models.Post.Title.label('Title'),
+            models.Post.content.label('content'),
+            func.count(models.Vote.post_id).label("votes")
+        ).outerjoin(
+            models.Vote, models.Vote.post_id == models.Post.id
+        ).filter(
+            models.Post.id == id,
+            models.Post.Title.contains(search)
+        ).group_by(
+            models.Post.id
+        ).first()
+
+        if not post:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No post found with id {id}")
+
+        response_data = {
+            "id": post.id,
+            "title": post.Title,
+            "content": post.content,
+            "votes": post.votes
+        }
+
+        return response_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @router.post("/Create_posts",status_code=status.HTTP_201_CREATED,response_model=schemas.PostResponse)
 def create_post(post:schemas.PostCreate,db:Session = Depends(get_db),current_user: int = Depends(oauth.get_current_user)):
     print("CUREENT_USER_ID : ",current_user)
@@ -45,7 +202,6 @@ def create_post(post:schemas.PostCreate,db:Session = Depends(get_db),current_use
     db.refresh(new_post) 
     return new_post
    
-
 
 #Delete post by id using sqlAlchemy
 @router.delete("/posts/{id}",status_code=status.HTTP_204_NO_CONTENT)

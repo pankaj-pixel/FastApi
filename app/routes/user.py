@@ -5,7 +5,9 @@ from sqlalchemy.orm import Session
 from typing import Optional,List
 
 
-router = APIRouter()
+router = APIRouter(
+       tags=['User']
+)
 
 
 @router.post("/CreateUser",response_model=schemas.UserOut)
@@ -29,7 +31,6 @@ def get_user(id: int ,db:Session = Depends(get_db),):
     if not id :
        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=" id Not Found !!!") 
     return user
-
 
 #fetching users information by id
 @router.get("/allusers", response_model=List[schemas.UserOut])

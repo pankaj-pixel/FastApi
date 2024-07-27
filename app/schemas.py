@@ -7,25 +7,22 @@ class User(BaseModel):
     email: EmailStr
     password:str
 
-
 #after Creating User Response
 class UserOut(BaseModel):
     id : int
     email: EmailStr
     created_at:datetime
 
-
 class UserLogIn(BaseModel):
     email:EmailStr
     password : str
-
-
 
 
 class PostBase(BaseModel):
     Title: str
     content:str
     Published :bool = True
+
     #created_at:datetime
     #create an optional field
 
@@ -41,14 +38,14 @@ class PostResponse(PostBase):
     content:str
     owner_id:int
     owner:UserOut
-
-
- 
     #default Field
     class Config:
         orm_mode = True
 
-
+class PostVote(PostResponse):
+    votes:int
+    class Config:
+        orm_mode = True
 
 class Token(BaseModel):
     access_token:str

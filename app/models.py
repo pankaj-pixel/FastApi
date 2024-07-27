@@ -7,8 +7,7 @@ from sqlalchemy.sql.sqltypes import TIMESTAMP
 
 
 
-class Post(Base):
-    
+class Post(Base): 
     __tablename__ ='post'
     id = Column(Integer,primary_key=True,nullable=False)
     Title =Column(String,nullable=False)
@@ -20,7 +19,8 @@ class Post(Base):
     owner = relationship("User")
 
 
-#cretae a model for user or login
+
+#Cretae a model for user or login 
 class User(Base):
     __tablename__ ='users'
     id = Column(Integer,primary_key=True,nullable=False)
@@ -30,7 +30,6 @@ class User(Base):
 
 
 class Vote(Base):
- 
     __tablename__ ='votes'
     user_id = Column(Integer,ForeignKey("users.id",ondelete='CASCADE'),primary_key=True,nullable=False)    
     post_id = Column(Integer,ForeignKey("post.id",ondelete="CASCADE"),primary_key=True,nullable=False)
